@@ -10,7 +10,7 @@
 
 % AUTHOR
 %   Original author: Peter Williams, Key Centre for Design Quality, Sydney University
-%   Modifications by Jan Sauermann, IFAU Uppsala 
+%   Modifications by Jan Sauermann, IFAU Uppsala (jan.sauermann@ifau.uu.se)
 
 ENTRY
   { address
@@ -33,7 +33,7 @@ ENTRY
     series
     title
     type
-    %URL
+    URL
     volume
     year
   }
