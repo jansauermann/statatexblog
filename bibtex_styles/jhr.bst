@@ -710,7 +710,7 @@ FUNCTION {article}
   new.block
   note output
   fin.entry
-%  write.url
+  write.url
 }
 
 FUNCTION {book}
@@ -745,7 +745,7 @@ FUNCTION {book}
   new.block
   note output
   fin.entry
-  %write.url
+  write.url
 }
 
 FUNCTION {booklet}
@@ -762,7 +762,7 @@ FUNCTION {booklet}
   new.block
   note output
   fin.entry
- % write.url
+  write.url
 }
 
 FUNCTION {inbook}
@@ -798,7 +798,7 @@ FUNCTION {inbook}
   new.block
   note output
   fin.entry
- % write.url
+  write.url
 }
 
 FUNCTION {incollection}
@@ -827,7 +827,7 @@ FUNCTION {incollection}
   new.block
   note output
   fin.entry
-  %write.url
+  write.url
 }
 
 FUNCTION {inproceedings}
@@ -862,7 +862,7 @@ FUNCTION {inproceedings}
   new.block
   note output
   fin.entry
-%  write.url
+  write.url
 }
 
 FUNCTION {conference} { inproceedings }
@@ -892,7 +892,7 @@ FUNCTION {manual}
   new.block
   note output
   fin.entry
- % write.url
+  write.url
 }
 
 FUNCTION {mastersthesis}
@@ -911,7 +911,7 @@ FUNCTION {mastersthesis}
   new.block
   note output
   fin.entry
- % write.url
+  write.url
 }
 
 FUNCTION {misc}
@@ -927,7 +927,7 @@ FUNCTION {misc}
   new.block
   note output
   fin.entry
- % write.url
+  write.url
   empty.misc.check
 }
 
@@ -947,7 +947,7 @@ FUNCTION {phdthesis}
   new.block
   note output
   fin.entry
- % write.url
+  write.url
 }
 
 FUNCTION {proceedings}
@@ -981,7 +981,7 @@ FUNCTION {proceedings}
   new.block
   note output
   fin.entry
-%  write.url
+ write.url
 }
 
 FUNCTION {techreport}
@@ -1000,7 +1000,7 @@ FUNCTION {techreport}
   new.block
   note output
   fin.entry
- % write.url
+  write.url
 }
 
 FUNCTION {unpublished}
@@ -1015,7 +1015,7 @@ FUNCTION {unpublished}
   if$
   note "note" output.check
   fin.entry
- %  write.url
+  write.url
 }
 
 FUNCTION {default.type} { misc }
