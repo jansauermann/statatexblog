@@ -157,7 +157,7 @@ FUNCTION {quote}
 FUNCTION {write.url}
 { URL empty$
     { skip$ }
-    { "\newline\harvardurl{" URL * "}" * write$ newline$ }
+    { "\harvardurl{" URL * "}" * write$ }
   if$
 }
 
