@@ -1,0 +1,144 @@
+%%%% Template for articles
+%%%% 2023: statatexblog.com
+%%%% Contact: statatexblog@gmail.com
+%%%% Stored at https://github.com/jansauermann/statatexblog/tree/main/templates
+
+%%%% To compile this document, please first install your TeX engine (https://www.latex-project.org/get/)
+
+
+%%%% Document-class
+\documentclass[12pt,a4]{article}
+
+%%%% Document properties
+ \usepackage[hidelinks, % Remove hidelinks to highlight links for references etc in pdf
+pdfauthor={Statatexblog.com}, % Replace with author names 
+pdftitle={This is my new working paper}, % Replace with actual title of your paper
+]{hyperref}
+% Define month-year for title page 
+\usepackage{datetime}
+\newdateformat{monthyeardate}{%
+  \monthname[\THEMONTH] \THEYEAR}
+
+%%%% Usepackages
+ 
+% Bibliography (we use ecta.bst)
+\usepackage[round,longnamesfirst,authoryear]{natbib} % Makes ecta include all names
+
+% Math-related packages 
+\usepackage{amsmath,amssymb,amsthm,amsfonts}
+\usepackage{mathrsfs}
+
+% Graphics related package
+\usepackage{subfig} % Allows subfigures 
+\usepackage{graphicx,epsfig,color}
+
+% All stuff related to page layout
+\usepackage{lscape}
+\usepackage{setspace} % Set line spacing in main text
+\usepackage{setspace}
+\clubpenalty = 10000
+\widowpenalty = 10000 \displaywidowpenalty = 10000
+\setlength{\unitlength}{1cm} \setlength{\textwidth}{16cm}
+\setlength{\oddsidemargin}{0pt} \setlength{\evensidemargin}{20pt}
+\setlength{\topmargin}{-60pt} \setlength{\textheight}{23.5cm}
+
+% Stuff related to tables
+\usepackage{dcolumn}
+\usepackage[dvipsnames]{xcolor}
+
+% Other potentially relevant packages (uncomment if needed)
+%\usepackage{tikz}
+
+
+
+\begin{document}
+
+%%%% (1) Title page
+\title{This is a latex document template\thanks{We thank Name 1, Name 2, and Name 3, as well as seminar and conference participants at the University of A, University of B and the University of C. We thank the Research Foundation for financial support.}}
+
+
+
+\author{%
+\textsc{Author 1}\thanks{Address etc of author 1}
+\and 
+\textsc{Author 2}\thanks{Address etc of author 2}
+\rule[25pt]{0pt}{0pt}
+}
+
+
+
+ 
+\setstretch{1.2}
+ 
+\date{\monthyeardate\today
+\rule[25pt]{0pt}{0pt}}
+
+\maketitle
+
+\thispagestyle{empty}
+
+
+\begin{abstract}
+\baselineskip=1.2\baselineskip
+\begin{footnotesize}
+
+
+\noindent This is an abstract. This is an abstract. This is an abstract. This is an abstract. This is an abstract. This is an abstract. This is an abstract. This is an abstract. This is an abstract. This is an abstract. This is an abstract. This is an abstract. This is an abstract. This is an abstract. This is an abstract. This is an abstract. This is an abstract. This is an abstract. This is an abstract. This is an abstract. This is an abstract. This is an abstract. This is an abstract. This is an abstract. This is an abstract. This is an abstract. This is an abstract. This is an abstract. This is an abstract. This is an abstract. This is an abstract. This is an abstract. This is an abstract. This is an abstract. This is an abstract. This is an abstract. This is an abstract.
+
+\noindent \textit{Keywords:} tex, paper
+\\
+\textit{JEL Classification Numbers:} J11, D11
+\end{footnotesize}
+\end{abstract}
+
+
+
+
+\setstretch{1.7}
+
+
+
+\clearpage
+
+\pagenumbering{arabic}
+\renewcommand{\thefootnote}{\arabic{footnote}}
+\setcounter{footnote}{0}
+
+%%%% (2) Main text
+
+\section{First Section}
+
+Here comes the text. You can cite references by adding ``\citep(key)'' (in parentheses) and ``\citet(key)'' in running text.
+
+\subsection{First subsection}
+
+Here comes more text
+
+\section{Second Section}
+
+Here comes even more text
+
+
+
+%%%% (3) References
+% Bibliography
+\clearpage
+\bibliographystyle{ecta}
+\bibliography{bibdb.bib}
+
+
+%%%% (4) Appendix 
+\clearpage 
+\setcounter{table}{0}
+\setcounter{figure}{0}
+\setcounter{page}{1}
+\renewcommand{\thetable}{A.\arabic{table}}
+\renewcommand{\thefigure}{A.\arabic{figure}}
+\renewcommand{\thepage}{A\arabic{page}}
+
+\section*{Online appendix }
+
+Here you can add more text and sections in the appendix
+
+
+\end{document}
