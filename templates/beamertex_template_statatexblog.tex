@@ -1,0 +1,103 @@
+%%%% Template for presentations
+%%%% 2023: statatexblog.com
+%%%% Contact: statatexblog@gmail.com
+%%%% Stored at https://github.com/jansauermann/statatexblog/tree/main/templates
+
+%%%% To compile this document, please first install your TeX engine (https://www.latex-project.org/get/)
+
+
+%%%% Document-class
+\RequirePackage{etoolbox}
+\expandafter\ifstrequal\expandafter{\jobname}{normal}
+{
+\documentclass[]{beamer}
+}
+{\documentclass[aspectratio=169,xcolor=table,]{beamer} % Add option "handout" for pdf without overlay effects
+}
+
+% Theme definitions
+%http://ftp.acc.umu.se/mirror/CTAN/macros/latex/contrib/beamer-contrib/themes/metropolis/doc/metropolistheme.pdf
+\usetheme[progressbar=frametitle,]{metropolis} 
+
+% Overlays etc
+%\setbeamercovered{}
+\setbeamercovered{transparent}
+
+% Progressbar
+
+% Figures 
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{xcolor}
+ \newcommand{\red}[1]{\textcolor{red}{#1}}
+
+
+
+% Short codes
+\newcommand{\sym}{}
+\newcommand{\inssec}{\insertsectionnumber.\ \insertsection}
+\newcommand{\inssubsec}{\insertsectionnumber.\insertsubsectionnumber\ \insertsubsection}
+
+% Arrows 
+\newcommand{\ra}{$\rightarrow$\ }
+\newcommand{\RA}{$\Rightarrow$\ }
+
+% Custom colors
+\definecolor{orange}{HTML}{EB811B}
+ \newcommand{\orange}[1]{\textcolor{orange}{#1}}
+
+
+%%%% Front slide
+\date{}
+\author{Presenting author (institution)\\ {\footnotesize {\em with} co-authors}
+%
+\institute{University A Seminar, March 2023} 
+\title{This is the title}
+% foot line
+\setbeamertemplate{footline}[text line]{Presenting author (Institution) \hfill University A Date---slide \insertframenumber}
+
+
+%%%% Main Part
+\begin{document}
+
+% Add logo on front slide (note: needs calibration)
+{
+  \usebackgroundtemplate{\includegraphics[width=\paperwidth]{logot.pdf}}
+\maketitle
+}
+
+
+
+
+
+\section{Introduction}
+
+
+\frame{
+\frametitle{\inssec: First slide}
+\framesubtitle{\inssubsec}
+
+\begin{itemize}
+\item This is the first itemize 
+\begin{itemize}
+\item And the first second order itemize 
+\item add \pause to add a break 
+\end{itemize}
+\end{itemize}
+
+}
+
+
+
+\frame[label=resultsmain]{
+\frametitle{\inssec: Second slide}
+\framesubtitle{\inssubsec}
+
+\begin{itemize}
+\item To link between slides, add a label (after \frame)
+\item Then create the link by typing: \hyperlink{LINK_TARGET}{\beamergotobutton{Text on button}} 
+\end{itemize}
+
+
+}
+\end{document}
