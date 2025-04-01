@@ -1,4 +1,4 @@
-  # Automated Citation Count Updater for LaTeX CVs
+  # Automated Citation Count Updater for CVs
 
 This Google Apps Script automatically retrieves citation counts for a list of Scopus-indexed papers and updates individual `.txt` files in a GitHub repository. The citation count files can then be included in a LaTeX document using `\input{}` to dynamically display citation numbers.
 
