@@ -44,7 +44,7 @@ You will need:
 
 - Go to https://script.google.com/
 - Create a new project
-- Paste the full script into the `Code.gs` file
+- Paste the full script into the `citation-tracker.gs` [file](https://github.com/jansauermann/statatexblog/blob/b0744752ba27becdbb0c122466c3e39c64d709bb/citation-tracker/citation-tracker.gs)
 - Replace the following placeholders:
   - `YOUR_SCOPUS_API_KEY`
   - `YOUR_GITHUB_TOKEN`
