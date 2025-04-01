@@ -67,14 +67,12 @@ You will need:
 Your repository should look like this:
 
 <pre>
-```
 cv/
 ├── fullcv.tex
 ├── cit/
 │   ├── PAPER_1.txt
 │   ├── PAPER_2.txt
 │   └── TotalCitations.txt
-```
 </pre>
 
 ## How to Use in LaTeX
@@ -93,6 +91,7 @@ cv/
 
 ```latex
 Some Paper Title \addcit{cit/PAPER_1.txt}
+```
 
 ```latex
 Total citations: \addcit{cit/TotalCitations.txt}
