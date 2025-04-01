@@ -1,1 +1,16 @@
-
+<?xml version="1.0" encoding="UTF-8" ?>
+  <rss version="2.0">
+    <channel>
+      <title>Random Feed</title>
+      <link>https://statatexblog.com</link>
+      <description>A random post every now and then</description>
+      <lastBuildDate>Tue, 01 Apr 2025 20:21:25 GMT</lastBuildDate>
+      <item>
+        <title><![CDATA[Curated working paper newsletters from @repec_org:]]></title>
+        <description><![CDATA[Curated working paper newsletters from @repec_org: http://nep.repec.org]]></description>
+        <pubDate>Tue, 01 Apr 2025 20:21:25 GMT</pubDate>
+        <link>https://yourwebsite.com</link>
+        <guid isPermaLink="false">de16c542-79b0-4b37-b6ba-f36c9db6b164</guid>
+      </item>
+    </channel>
+  </rss>
