@@ -14,7 +14,7 @@ This Google Apps Script automatically retrieves citation counts for a list of Sc
 
 You will need:
 
-- A [Scopus API key](https://dev.elsevier.com/user) from Elsevier
+- A [Scopus API key](https://dev.elsevier.com) from Elsevier
 - A [GitHub personal access token](https://github.com/settings/tokens) with `repo` permissions
 - A GitHub repository (e.g., `cv`) with a subfolder `cit/`
 - A LaTeX CV that can include citation counts via `\input{}`
