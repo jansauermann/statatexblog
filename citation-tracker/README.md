@@ -66,11 +66,16 @@ You will need:
 
 Your repository should look like this:
 
+<pre>
+```
+cv/
 ├── fullcv.tex
 ├── cit/
 │   ├── PAPER_1.txt
 │   ├── PAPER_2.txt
 │   └── TotalCitations.txt
+```
+</pre>
 
 ## How to Use in LaTeX
 
@@ -82,11 +87,16 @@ Your repository should look like this:
 
 \newcommand{\addcit}[1]{\ifshowcitations\input{#1}\fi}
 
+```
+
 ### Step 2: Use the macro in the document
 
+```latex
 Some Paper Title \addcit{cit/PAPER_1.txt}
 
+```latex
 Total citations: \addcit{cit/TotalCitations.txt}
+```
 
 #### Note
 - If the .txt file is empty or contains only %, LaTeX will not break.
