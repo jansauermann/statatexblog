@@ -1,0 +1,62 @@
+const BASE_URL = "https://your.page.com/";  // Change this
+const EMAIL = "YOUR_EMAIL_ADDRESS";  // Change this
+
+function checkBrokenLinks() {
+  const visited = new Set();
+  const toVisit = [BASE_URL];
+  const brokenLinks = [];
+
+  while (toVisit.length > 0) {
+    const pageUrl = toVisit.pop();
+    if (visited.has(pageUrl)) continue;
+    visited.add(pageUrl);
+
+    let html;
+    try {
+      html = UrlFetchApp.fetch(pageUrl).getContentText();
+    } catch (e) {
+      Logger.log(`Failed to fetch ${pageUrl}`);
+      continue;
+    }
+
+    const regex = /<a\s+(?:[^>]*?\s+)?href="([^"#?]+)"[^>]*?>(.*?)<\/a>/g;
+    let match;
+    while ((match = regex.exec(html)) !== null) {
+      const href = match[1];
+      const text = match[2].replace(/\s+/g, ' ').trim();
+
+      // Skip mailto and external links
+      if (href.startsWith("mailto:") || href.startsWith("http") && !href.startsWith(BASE_URL)) continue;
+
+      // Make relative links absolute
+      const fullUrl = href.startsWith("http") ? href : BASE_URL.replace(/\/$/, "") + "/" + href.replace(/^\//, "");
+
+      // Avoid rechecking already visited internal pages
+      if (fullUrl.startsWith(BASE_URL) && !visited.has(fullUrl)) {
+        toVisit.push(fullUrl);
+      }
+
+      try {
+        const response = UrlFetchApp.fetch(fullUrl, { muteHttpExceptions: true });
+        const code = response.getResponseCode();
+        if (code !== 200) {
+          brokenLinks.push({ page: pageUrl, link: fullUrl, text, code });
+        }
+      } catch (e) {
+        brokenLinks.push({ page: pageUrl, link: fullUrl, text, code: "ERROR" });
+      }
+    }
+  }
+
+  if (brokenLinks.length > 0) {
+    const body = brokenLinks.map(b =>
+      `🔗 On page: ${b.page}\n→ Link: ${b.link}\n→ Text: "${b.text}"\n→ Status: ${b.code}`
+    ).join("\n\n");
+
+    MailApp.sendEmail({
+      to: EMAIL,
+      subject: "🔍 Broken links found on your site",
+      body: `The following broken links were detected:\n\n${body}`,
+    });
+  }
+}
