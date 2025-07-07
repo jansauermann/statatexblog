@@ -39,9 +39,9 @@ function checkBrokenLinks() {
       try {
         const response = UrlFetchApp.fetch(fullUrl, { muteHttpExceptions: true });
         const code = response.getResponseCode();
-        if (code !== 200) {
-          brokenLinks.push({ page: pageUrl, link: fullUrl, text, code });
-        }
+        if (code !== 200 && code !== 999) {
+          brokenLinks.push({ page: normalizedPageUrl, link: linkWithoutFragment, text, code });
+          }
       } catch (e) {
         brokenLinks.push({ page: pageUrl, link: fullUrl, text, code: "ERROR" });
       }
