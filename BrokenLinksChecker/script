@@ -6,44 +6,64 @@ function checkBrokenLinks() {
   const toVisit = [BASE_URL];
   const brokenLinks = [];
 
+  Logger.clear();
+
   while (toVisit.length > 0) {
-    const pageUrl = toVisit.pop();
+    const rawUrl = toVisit.pop();
+    const pageUrl = normalizeUrl(rawUrl);
+
     if (visited.has(pageUrl)) continue;
     visited.add(pageUrl);
+
+    Logger.log(`Visiting: ${pageUrl}`);
 
     let html;
     try {
       html = UrlFetchApp.fetch(pageUrl).getContentText();
     } catch (e) {
-      Logger.log(`Failed to fetch ${pageUrl}`);
+      Logger.log(`Failed to fetch ${pageUrl}: ${e}`);
+      brokenLinks.push({ page: pageUrl, link: pageUrl, text: "(page fetch failed)", code: "ERROR" });
       continue;
     }
 
-    const regex = /<a\s+(?:[^>]*?\s+)?href="([^"#?]+)"[^>]*?>(.*?)<\/a>/g;
+    html = html.replace(/```{=html}[\s\S]*?```/g, '');
+
+    const regex = /<a\s+(?:[^>]*?\s+)?href="([^"]+)"[^>]*?>(.*?)<\/a>/gi;
     let match;
+
     while ((match = regex.exec(html)) !== null) {
-      const href = match[1];
+      const href = match[1].trim();
       const text = match[2].replace(/\s+/g, ' ').trim();
 
-      // Skip mailto and external links
-      if (href.startsWith("mailto:") || href.startsWith("http") && !href.startsWith(BASE_URL)) continue;
+      if (href.startsWith("mailto:") || href.startsWith("javascript:") || href.startsWith("#")) continue;
 
-      // Make relative links absolute
-      const fullUrl = href.startsWith("http") ? href : BASE_URL.replace(/\/$/, "") + "/" + href.replace(/^\//, "");
+      let fullUrl;
+      try {
+        fullUrl = resolveRelativeUrl(href, pageUrl);
+      } catch (e) {
+        brokenLinks.push({ page: pageUrl, link: href, text, code: "ERROR (invalid relative URL)" });
+        continue;
+      }
 
-      // Avoid rechecking already visited internal pages
-      if (fullUrl.startsWith(BASE_URL) && !visited.has(fullUrl)) {
-        toVisit.push(fullUrl);
+      const normalizedLink = normalizeUrl(fullUrl);
+      const linkWithoutFragment = normalizedLink.split("#")[0];
+
+      const isInternal = linkWithoutFragment.startsWith(BASE_URL);
+
+      if (isInternal && !visited.has(linkWithoutFragment) && !toVisit.includes(linkWithoutFragment)) {
+        toVisit.push(linkWithoutFragment);
       }
 
       try {
-        const response = UrlFetchApp.fetch(fullUrl, { muteHttpExceptions: true });
+        const response = UrlFetchApp.fetch(linkWithoutFragment, { muteHttpExceptions: true });
         const code = response.getResponseCode();
-        if (code !== 200 && code !== 999) {
-          brokenLinks.push({ page: normalizedPageUrl, link: linkWithoutFragment, text, code });
-          }
+        Logger.log(`Checked: ${linkWithoutFragment} → ${code}`);
+        if (code !== 200 && code !== 999 && code !== 403) {
+          brokenLinks.push({ page: pageUrl, link: linkWithoutFragment, text, code });
+        }
       } catch (e) {
-        brokenLinks.push({ page: pageUrl, link: fullUrl, text, code: "ERROR" });
+        Logger.log(`Error fetching ${linkWithoutFragment}: ${e}`);
+        brokenLinks.push({ page: pageUrl, link: linkWithoutFragment, text, code: "ERROR" });
       }
     }
   }
@@ -55,8 +75,53 @@ function checkBrokenLinks() {
 
     MailApp.sendEmail({
       to: EMAIL,
-      subject: "🔍 Broken links found on your site",
+      subject: "🔍 Broken links found on your Quarto site",
       body: `The following broken links were detected:\n\n${body}`,
     });
+
+    Logger.log("Email sent with broken links.");
+  } else {
+    Logger.log("No broken links found.");
   }
+}
+
+function normalizeUrl(url) {
+  if (url.endsWith('/') && url !== BASE_URL + '/') {
+    url = url.slice(0, -1);
+  }
+  url = url.replace(/\/index\.html$/, '');
+  url = url.replace(/([^:]\/)\/+/g, '$1');
+  return url;
+}
+
+function resolveRelativeUrl(href, baseUrl) {
+  if (href.startsWith("http")) return href;
+
+  const baseMatch = baseUrl.match(/^(https?:\/\/[^\/]+)(\/.*)?$/);
+  if (!baseMatch) throw new Error("Invalid base URL");
+
+  const origin = baseMatch[1];
+  let path = baseMatch[2] || "/";
+
+  if (path.match(/\/[^\/]+\.html$/)) {
+    path = path.substring(0, path.lastIndexOf("/")) + "/";
+  }
+
+  if (href.startsWith("/")) {
+    return origin + href;
+  }
+
+  const combined = path + href;
+  const segments = combined.split("/");
+  const resolved = [];
+
+  for (const segment of segments) {
+    if (segment === "..") {
+      resolved.pop();
+    } else if (segment !== "." && segment !== "") {
+      resolved.push(segment);
+    }
+  }
+
+  return origin + "/" + resolved.join("/");
 }
