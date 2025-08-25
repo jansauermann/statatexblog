@@ -1,75 +1,101 @@
 const BASE_URL = "https://your.page.com/";  // Change this
 const EMAIL = "YOUR_EMAIL_ADDRESS";  // Change this
 
+
+const OK_STATUSES = new Set([200, 301, 302, 303, 307, 308, 401, 403, 999]);
+
 function checkBrokenLinks() {
-  const visited = new Set();
-  const toVisit = [BASE_URL];
-  const brokenLinks = [];
+  const base = ensureTrailingSlash(BASE_URL);
+
+  const visitedPages = new Set();
+  const toVisit = [base];
+  const broken = [];
 
   Logger.clear();
 
   while (toVisit.length > 0) {
-    const rawUrl = toVisit.pop();
-    const pageUrl = normalizeUrl(rawUrl);
+    const current = toVisit.pop();
+    const pageUrl = canonicalUrl(current, true);
 
-    if (visited.has(pageUrl)) continue;
-    visited.add(pageUrl);
+    if (visitedPages.has(pageUrl)) continue;
+    visitedPages.add(pageUrl);
 
     Logger.log(`Visiting: ${pageUrl}`);
 
-    let html;
+    let html, contentType;
     try {
-      html = UrlFetchApp.fetch(pageUrl).getContentText();
+      const resp = UrlFetchApp.fetch(pageUrl, {
+        followRedirects: true,
+        muteHttpExceptions: true,
+        headers: { "User-Agent": "AppsScript LinkChecker/1.0" },
+      });
+      const code = resp.getResponseCode();
+      contentType = resp.getHeaders()["Content-Type"] || "";
+
+      if (!OK_STATUSES.has(code)) {
+        broken.push({ page: pageUrl, link: pageUrl, text: "(page fetch failed)", code });
+        continue;
+      }
+
+      if (!/text\/html/i.test(contentType)) continue;
+      html = resp.getContentText();
+
     } catch (e) {
-      Logger.log(`Failed to fetch ${pageUrl}: ${e}`);
-      brokenLinks.push({ page: pageUrl, link: pageUrl, text: "(page fetch failed)", code: "ERROR" });
+      broken.push({ page: pageUrl, link: pageUrl, text: "(page fetch error)", code: "ERROR" });
       continue;
     }
 
-    html = html.replace(/```{=html}[\s\S]*?```/g, '');
+    html = html.replace(/```{=html}[\s\S]*?```/g, "");
+    html = html.replace(/<code[\s\S]*?<\/code>/gi, "");
+    html = html.replace(/<pre[\s\S]*?<\/pre>/gi, "");
 
     const regex = /<a\s+(?:[^>]*?\s+)?href="([^"]+)"[^>]*?>(.*?)<\/a>/gi;
     let match;
 
     while ((match = regex.exec(html)) !== null) {
-      const href = match[1].trim();
-      const text = match[2].replace(/\s+/g, ' ').trim();
+      const rawHref = sanitizeHref(match[1]);
+      const linkText = stripHtml(match[2]).replace(/\s+/g, " ").trim();
+      if (!rawHref || /^(mailto:|javascript:|tel:|#)/i.test(rawHref)) continue;
 
-      if (href.startsWith("mailto:") || href.startsWith("javascript:") || href.startsWith("#")) continue;
-
-      let fullUrl;
+      let resolved;
       try {
-        fullUrl = resolveRelativeUrl(href, pageUrl);
+        resolved = resolveRelativeUrl(rawHref, pageUrl);
       } catch (e) {
-        brokenLinks.push({ page: pageUrl, link: href, text, code: "ERROR (invalid relative URL)" });
+        broken.push({ page: pageUrl, link: rawHref, text: linkText, code: "ERROR (invalid URL)" });
         continue;
       }
 
-      const normalizedLink = normalizeUrl(fullUrl);
-      const linkWithoutFragment = normalizedLink.split("#")[0];
+      let normalized = canonicalUrl(resolved, true);
+      const isInternal = normalized.startsWith(base);
 
-      const isInternal = linkWithoutFragment.startsWith(BASE_URL);
+      if (isInternal && /\.(qmd|md)$/i.test(normalized)) {
+        normalized = normalized.replace(/\.(qmd|md)$/i, ".html");
+      }
 
-      if (isInternal && !visited.has(linkWithoutFragment) && !toVisit.includes(linkWithoutFragment)) {
-        toVisit.push(linkWithoutFragment);
+      if (isInternal && looksLikeHtmlPage(normalized) &&
+          !visitedPages.has(normalized) && !toVisit.includes(normalized)) {
+        toVisit.push(normalized);
       }
 
       try {
-        const response = UrlFetchApp.fetch(linkWithoutFragment, { muteHttpExceptions: true });
-        const code = response.getResponseCode();
-        Logger.log(`Checked: ${linkWithoutFragment} → ${code}`);
-        if (code !== 200 && code !== 999 && code !== 403) {
-          brokenLinks.push({ page: pageUrl, link: linkWithoutFragment, text, code });
+        const resp = UrlFetchApp.fetch(normalized, {
+          followRedirects: true,
+          muteHttpExceptions: true,
+          headers: { "User-Agent": "AppsScript LinkChecker/1.0" },
+        });
+        const code = resp.getResponseCode();
+        Logger.log(`Checked: ${normalized} → ${code}`);
+        if (!OK_STATUSES.has(code)) {
+          broken.push({ page: pageUrl, link: normalized, text: linkText, code });
         }
       } catch (e) {
-        Logger.log(`Error fetching ${linkWithoutFragment}: ${e}`);
-        brokenLinks.push({ page: pageUrl, link: linkWithoutFragment, text, code: "ERROR" });
+        broken.push({ page: pageUrl, link: normalized, text: linkText, code: "ERROR" });
       }
     }
   }
 
-  if (brokenLinks.length > 0) {
-    const body = brokenLinks.map(b =>
+  if (broken.length > 0) {
+    const body = broken.map(b =>
       `🔗 On page: ${b.page}\n→ Link: ${b.link}\n→ Text: "${b.text}"\n→ Status: ${b.code}`
     ).join("\n\n");
 
@@ -78,24 +104,52 @@ function checkBrokenLinks() {
       subject: "🔍 Broken links found on your Quarto site",
       body: `The following broken links were detected:\n\n${body}`,
     });
-
-    Logger.log("Email sent with broken links.");
   } else {
     Logger.log("No broken links found.");
   }
 }
 
-function normalizeUrl(url) {
-  if (url.endsWith('/') && url !== BASE_URL + '/') {
-    url = url.slice(0, -1);
-  }
-  url = url.replace(/\/index\.html$/, '');
-  url = url.replace(/([^:]\/)\/+/g, '$1');
+/** Helpers **/
+
+function ensureTrailingSlash(u) {
+  return u.endsWith("/") ? u : u + "/";
+}
+
+function canonicalUrl(href, stripHash) {
+  let url = href;
+  if (stripHash) url = url.split("#")[0];
+
+  url = url.replace(/\/index\.html$/i, "/");
+  url = url.replace(/([^:]\/)\/+/g, "$1");
+
+  // fix: ta bort punkt som står före slash
+  url = url.replace(/\.(?=\/)/g, "");
+  // fix: ta bort om path slutar med "/."
+  url = url.replace(/\/\.$/, "/");
+
+  url = url.replace(/[.;]+$/g, "");
   return url;
 }
 
+function looksLikeHtmlPage(url) {
+  if (url.endsWith("/")) return true;
+  if (url.match(/\.html?$/i)) return true;
+  const last = url.split("/").pop();
+  if (last && !last.includes(".")) return true;
+  return false;
+}
+
+function sanitizeHref(href) {
+  if (!href) return href;
+  return href.trim().replace(/([)\].,;:]+)$/g, "");
+}
+
+function stripHtml(s) {
+  return s.replace(/<[^>]*>/g, "");
+}
+
 function resolveRelativeUrl(href, baseUrl) {
-  if (href.startsWith("http")) return href;
+  if (/^https?:\/\//i.test(href)) return href;
 
   const baseMatch = baseUrl.match(/^(https?:\/\/[^\/]+)(\/.*)?$/);
   if (!baseMatch) throw new Error("Invalid base URL");
@@ -103,25 +157,33 @@ function resolveRelativeUrl(href, baseUrl) {
   const origin = baseMatch[1];
   let path = baseMatch[2] || "/";
 
-  if (path.match(/\/[^\/]+\.html$/)) {
-    path = path.substring(0, path.lastIndexOf("/")) + "/";
+  if (!path.endsWith("/")) {
+    const idx = path.lastIndexOf("/");
+    path = idx >= 0 ? path.slice(0, idx + 1) : "/";
   }
 
   if (href.startsWith("/")) {
-    return origin + href;
+    return origin + canonicalUrl(href, true);
   }
 
   const combined = path + href;
   const segments = combined.split("/");
   const resolved = [];
 
-  for (const segment of segments) {
-    if (segment === "..") {
-      resolved.pop();
-    } else if (segment !== "." && segment !== "") {
-      resolved.push(segment);
+  for (const seg of segments) {
+    if (seg === "..") {
+      if (resolved.length > 0) resolved.pop();
+    } else if (seg === "." || seg === "") {
+      // skip
+    } else {
+      resolved.push(seg);
     }
   }
 
-  return origin + "/" + resolved.join("/");
+  let abs = origin + "/" + resolved.join("/");
+
+  abs = abs.replace(/\.(?=\/)/g, "");
+  abs = abs.replace(/\/\.$/, "/");
+
+  return canonicalUrl(abs, true);
 }
